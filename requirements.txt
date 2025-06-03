@@ -1,0 +1,22 @@
+jsonify == 0.5
+uvicorn==0.17.6
+pandas==2.2.3
+numpy==2.1.0
+fastapi~=0.115.12
+pytk==0.0.2.1
+pytz==2024.1
+requests==2.32.3
+tk==0.1.0
+httptools
+jproperties==2.1.2
+asgi_correlation_id==3.0.0
+python-json-logger==2.0.4
+psycopg2-binary
+sqlalchemy==1.4.5
+boto3==1.17.66
+anyio==3.7.1
+starlette==0.40.0
+httpx==0.24.0
+openai==0.28.1
+asgi-correlation-id~=3.0.0
+pydantic_settings

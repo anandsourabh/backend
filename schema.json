@@ -1,0 +1,1249 @@
+{
+  "table_name": "ux_all_info_consolidated",
+  "description": "PostgreSQL materialized view containing consolidated property exposure and risk management data for insurance underwriting and analysis.",
+  "sql_convertible_guidance": "Questions referencing column names or synonyms (e.g., 'TIV' for derived_total_insured_value, 'earthquake zone' for nathan_earthquake_hazardzone) should be classified as sql_convertible.",
+  "columns": [
+    {
+      "category": "Identification",
+      "description": "Unique identifiers for records, locations, and companies.",
+      "fields": [
+        {
+          "name": "ux_sov_upload_details_id",
+          "type": "bigint",
+          "description": "Unique ID for the source of values (SOV) upload."
+        },
+        {
+          "name": "marsh_location_id",
+          "type": "bigint",
+          "description": "Unique Marsh identifier for the property location."
+        },
+        {
+          "name": "company_number",
+          "type": "string (character varying)",
+          "description": "Unique identifier for the company owning the property."
+        },
+        {
+          "name": "location_identifier",
+          "type": "string (character varying)",
+          "description": "Unique identifier for the specific location."
+        },
+        {
+          "name": "ux_sov_locations_id",
+          "type": "bigint",
+          "description": "ID for SOV location record."
+        },
+        {
+          "name": "loc_marsh_location_id",
+          "type": "bigint",
+          "description": "Marsh location ID for location-specific queries."
+        },
+        {
+          "name": "rollback_marsh_location_id",
+          "type": "bigint",
+          "description": "Previous Marsh location ID for rollback purposes."
+        }
+      ]
+    },
+    {
+      "category": "Location",
+      "description": "Geographic and address details of the property.",
+      "fields": [
+        {
+          "name": "location_name",
+          "type": "string (character varying)",
+          "description": "Name or description of the location."
+        },
+        {
+          "name": "address",
+          "type": "string (character varying)",
+          "description": "Street address of the property."
+        },
+        {
+          "name": "address_3",
+          "type": "string (character varying)",
+          "description": "Additional address information."
+        },
+        {
+          "name": "city",
+          "type": "string (character varying)",
+          "description": "City where the property is located."
+        },
+        {
+          "name": "state",
+          "type": "string (character varying)",
+          "description": "State or province of the property."
+        },
+        {
+          "name": "postal_code",
+          "type": "string (character varying)",
+          "description": "ZIP or postal code."
+        },
+        {
+          "name": "county",
+          "type": "string (character varying)",
+          "description": "County where the property is located."
+        },
+        {
+          "name": "country",
+          "type": "string (character varying)",
+          "description": "Country name (may be non-standardized)."
+        },
+        {
+          "name": "derived_country",
+          "type": "string (character varying)",
+          "description": "Standardized 2-letter country code (e.g., 'US'). Use for country queries."
+        },
+        {
+          "name": "country_code",
+          "type": "string (character varying)",
+          "description": "Alternative country code."
+        },
+        {
+          "name": "latitude",
+          "type": "string (character varying)",
+          "description": "Geographic latitude of the property."
+        },
+        {
+          "name": "longitude",
+          "type": "string (character varying)",
+          "description": "Geographic longitude of the property."
+        },
+        {
+          "name": "recommended_latitude",
+          "type": "string (character varying)",
+          "description": "Recommended latitude from geocoding."
+        },
+        {
+          "name": "recommended_longitude",
+          "type": "string (character varying)",
+          "description": "Recommended longitude from geocoding."
+        },
+        {
+          "name": "recommended_state",
+          "type": "string (character varying)",
+          "description": "Recommended state from geocoding."
+        },
+        {
+          "name": "recommended_country",
+          "type": "string (character varying)",
+          "description": "Recommended country from geocoding."
+        },
+        {
+          "name": "add_or_intl_address",
+          "type": "string (character varying)",
+          "description": "Additional or international address details."
+        },
+        {
+          "name": "recommended_geocoder",
+          "type": "string (character varying)",
+          "description": "Geocoder used for location validation."
+        }
+      ]
+    },
+    {
+      "category": "COPE Attributes",
+      "description": "Construction, Occupancy, Protection, Exposure attributes for risk assessment.",
+      "fields": [
+        {
+          "name": "construction",
+          "type": "string (character varying)",
+          "description": "Construction type (e.g., frame, masonry). Primary COPE attribute."
+        },
+        {
+          "name": "construction_description",
+          "type": "string (character varying)",
+          "description": "Detailed description of construction type."
+        },
+        {
+          "name": "const_descrip_schdl_val",
+          "type": "string (character varying)",
+          "description": "Construction description from schedule of values."
+        },
+        {
+          "name": "const_cd_scheme",
+          "type": "string (character varying)",
+          "description": "Construction code scheme used."
+        },
+        {
+          "name": "construction_quality",
+          "type": "string (character varying)",
+          "description": "Quality of construction (e.g., high, low)."
+        },
+        {
+          "name": "construction_quality_wind",
+          "type": "string (character varying)",
+          "description": "Construction quality for wind resistance."
+        },
+        {
+          "name": "occupancy",
+          "type": "string (character varying)",
+          "description": "Occupancy type (e.g., office, residential). Primary COPE attribute."
+        },
+        {
+          "name": "occupancy_description",
+          "type": "string (character varying)",
+          "description": "Detailed description of occupancy type."
+        },
+        {
+          "name": "occup_descrip_schdl_val",
+          "type": "string (character varying)",
+          "description": "Occupancy description from schedule of values."
+        },
+        {
+          "name": "occup_code_scheme",
+          "type": "string (character varying)",
+          "description": "Occupancy code scheme used."
+        },
+        {
+          "name": "year_built",
+          "type": "date (string, MM/DD/YYYY)",
+          "description": "Year the property was built. Cast to DATE for comparisons."
+        },
+        {
+          "name": "year_upgrade",
+          "type": "date (string, MM/DD/YYYY)",
+          "description": "Year of major upgrades. Cast to DATE for comparisons."
+        },
+        {
+          "name": "number_of_stories",
+          "type": "string (character varying)",
+          "description": "Number of floors in the building."
+        },
+        {
+          "name": "floors_occupied",
+          "type": "string (character varying)",
+          "description": "Number of floors occupied by the company."
+        },
+        {
+          "name": "number_of_buildings",
+          "type": "string (character varying)",
+          "description": "Total number of buildings at the location."
+        },
+        {
+          "name": "sprinklered_y_n",
+          "type": "string (character varying)",
+          "description": "Indicates if the property has sprinklers ('Y' or 'N')."
+        },
+        {
+          "name": "sprinkler_type",
+          "type": "string (character varying)",
+          "description": "Type of sprinkler system."
+        },
+        {
+          "name": "sprinkler_leakage",
+          "type": "string (character varying)",
+          "description": "Presence of sprinkler leakage issues."
+        },
+        {
+          "name": "sprinkler_leakage_susceptibility",
+          "type": "string (character varying)",
+          "description": "Susceptibility to sprinkler leakage."
+        },
+        {
+          "name": "flood_protection",
+          "type": "string (character varying)",
+          "description": "Flood protection measures (e.g., barriers, elevation)."
+        },
+        {
+          "name": "earthquake_equipment_bracing",
+          "type": "string (character varying)",
+          "description": "Presence of equipment bracing for earthquake resistance."
+        },
+        {
+          "name": "structural_upgrade",
+          "type": "string (character varying)",
+          "description": "Details of structural upgrades for risk mitigation."
+        },
+        {
+          "name": "base_isolation",
+          "type": "string (character varying)",
+          "description": "Presence of base isolation for seismic protection."
+        },
+        {
+          "name": "roof_equipment_bracing",
+          "type": "string (character varying)",
+          "description": "Bracing for rooftop equipment against wind or seismic risks."
+        },
+        {
+          "name": "outdoor_mach_eqp_bracing",
+          "type": "string (character varying)",
+          "description": "Bracing for outdoor machinery or equipment."
+        }
+      ]
+    },
+    {
+      "category": "Financial Metrics",
+      "description": "Monetary values for insurance and risk assessment, including total insured value (TIV) and losses.",
+      "fields": [
+        {
+          "name": "derived_total_insured_value",
+          "type": "numeric (double precision)",
+          "description": "Calculated total insured value (TIV) in USD. Primary column for TIV queries."
+        },
+        {
+          "name": "total_insured_value",
+          "type": "string (character varying)",
+          "description": "Original TIV, may require casting to numeric. Use derived_total_insured_value for accuracy."
+        },
+        {
+          "name": "derived_local_total_insured_value",
+          "type": "numeric (double precision)",
+          "description": "TIV in local currency."
+        },
+        {
+          "name": "local_total_insured_value",
+          "type": "string (character varying)",
+          "description": "Original TIV in local currency."
+        },
+        {
+          "name": "modelable_tiv",
+          "type": "numeric (double precision)",
+          "description": "TIV suitable for risk modeling."
+        },
+        {
+          "name": "building_values",
+          "type": "string (character varying)",
+          "description": "Value of the building structure, may require casting."
+        },
+        {
+          "name": "derived_building_values",
+          "type": "numeric (double precision)",
+          "description": "Calculated building value in USD."
+        },
+        {
+          "name": "local_building_values",
+          "type": "string (character varying)",
+          "description": "Building value in local currency."
+        },
+        {
+          "name": "content_values",
+          "type": "string (character varying)",
+          "description": "Value of contents, may require casting."
+        },
+        {
+          "name": "derived_content_values",
+          "type": "numeric (double precision)",
+          "description": "Calculated contents value in USD."
+        },
+        {
+          "name": "local_content_values",
+          "type": "string (character varying)",
+          "description": "Contents value in local currency."
+        },
+        {
+          "name": "total_content_values",
+          "type": "string (character varying)",
+          "description": "Total value of all contents."
+        },
+        {
+          "name": "derived_total_content_values",
+          "type": "numeric (double precision)",
+          "description": "Calculated total contents value in USD."
+        },
+        {
+          "name": "business_income",
+          "type": "string (character varying)",
+          "description": "Business income value, may require casting."
+        },
+        {
+          "name": "derived_business_income",
+          "type": "numeric (double precision)",
+          "description": "Calculated business income value in USD."
+        },
+        {
+          "name": "local_business_income",
+          "type": "string (character varying)",
+          "description": "Business income in local currency."
+        },
+        {
+          "name": "business_interrupt_val",
+          "type": "string (character varying)",
+          "description": "Business interruption value, may require casting."
+        },
+        {
+          "name": "derived_business_interrupt_val",
+          "type": "numeric (double precision)",
+          "description": "Calculated business interruption value in USD."
+        },
+        {
+          "name": "local_business_interrupt_val",
+          "type": "string (character varying)",
+          "description": "Business interruption value in local currency."
+        },
+        {
+          "name": "derived_business_interrupt_val_12mo",
+          "type": "numeric (double precision)",
+          "description": "Business interruption value over 12 months."
+        },
+        {
+          "name": "revenue",
+          "type": "string (character varying)",
+          "description": "Annual revenue, may require casting."
+        },
+        {
+          "name": "derived_revenue",
+          "type": "numeric (double precision)",
+          "description": "Calculated annual revenue in USD."
+        },
+        {
+          "name": "local_revenue",
+          "type": "string (character varying)",
+          "description": "Revenue in local currency."
+        },
+        {
+          "name": "property_damage",
+          "type": "string (character varying)",
+          "description": "Property damage value, may require casting."
+        },
+        {
+          "name": "derived_property_damage",
+          "type": "numeric (double precision)",
+          "description": "Calculated property damage value in USD."
+        },
+        {
+          "name": "local_property_damage",
+          "type": "string (character varying)",
+          "description": "Property damage in local currency."
+        },
+        {
+          "name": "rental_income",
+          "type": "string (character varying)",
+          "description": "Rental income value, may require casting."
+        },
+        {
+          "name": "derived_rental_income",
+          "type": "numeric (double precision)",
+          "description": "Calculated rental income in USD."
+        },
+        {
+          "name": "local_rental_income",
+          "type": "string (character varying)",
+          "description": "Rental income in local currency."
+        },
+        {
+          "name": "invtry_or_stock_val_ctnt2",
+          "type": "string (character varying)",
+          "description": "Inventory or stock value, may require casting."
+        },
+        {
+          "name": "derived_invtry_or_stock_val_ctnt2",
+          "type": "numeric (double precision)",
+          "description": "Calculated inventory/stock value in USD."
+        },
+        {
+          "name": "local_invtry_or_stock_val_ctnt2",
+          "type": "string (character varying)",
+          "description": "Inventory/stock value in local currency."
+        },
+        {
+          "name": "machinery_equipment_ctnt3",
+          "type": "string (character varying)",
+          "description": "Machinery/equipment value, may require casting."
+        },
+        {
+          "name": "derived_machinery_equipment_ctnt3",
+          "type": "numeric (double precision)",
+          "description": "Calculated machinery/equipment value in USD."
+        },
+        {
+          "name": "local_machinery_equipment_ctnt3",
+          "type": "string (character varying)",
+          "description": "Machinery/equipment value in local currency."
+        },
+        {
+          "name": "currency",
+          "type": "string (character varying)",
+          "description": "Currency used for financial values."
+        }
+      ]
+    },
+    {
+      "category": "Hazard Zones",
+      "description": "Risk levels for natural perils (e.g., earthquake, hurricane). 'UNKNOWN' = 0; high earthquake risk = zones 2-4.",
+      "fields": [
+        {
+          "name": "nathan_earthquake_hazardzone",
+          "type": "string (text)",
+          "description": "Earthquake hazard zone (0-4). High risk: 2-4. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_hurricane_hazardzone",
+          "type": "string (text)",
+          "description": "Hurricane hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_tornado_hazardzone",
+          "type": "string (text)",
+          "description": "Tornado hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_wildfire_hazardzone",
+          "type": "string (text)",
+          "description": "Wildfire hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_flash_flood_hazardzone",
+          "type": "string (text)",
+          "description": "Flash flood hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_river_flood_hazardzone",
+          "type": "string (text)",
+          "description": "River flood hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_storm_surge_tornado_hazardzone",
+          "type": "string (text)",
+          "description": "Storm surge/tornado hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_hail_hazardzone",
+          "type": "string (text)",
+          "description": "Hail hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_lightning_hazardzone",
+          "type": "string (text)",
+          "description": "Lightning hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_tsunami_hazardzone",
+          "type": "string (text)",
+          "description": "Tsunami hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_volcano_hazardzone",
+          "type": "string (text)",
+          "description": "Volcano hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "nathan_extra_tropical_storm_hazardzone",
+          "type": "string (text)",
+          "description": "Extra-tropical storm hazard zone. 'UNKNOWN' = 0."
+        },
+        {
+          "name": "fema_flood_zone",
+          "type": "string (character varying)",
+          "description": "FEMA flood zone designation."
+        },
+        {
+          "name": "custom_flood_zone_code",
+          "type": "string (character varying)",
+          "description": "Custom flood zone code."
+        },
+        {
+          "name": "atc_earthquake",
+          "type": "string (text)",
+          "description": "ATC earthquake risk classification."
+        },
+        {
+          "name": "california_earthquake",
+          "type": "string (text)",
+          "description": "California-specific earthquake risk."
+        },
+        {
+          "name": "us_hurricane_wind_tier_wind",
+          "type": "string (text)",
+          "description": "US hurricane wind tier."
+        },
+        {
+          "name": "zurich_earthquake",
+          "type": "string (text)",
+          "description": "Zurich earthquake risk classification."
+        },
+        {
+          "name": "zurich_wind",
+          "type": "string (text)",
+          "description": "Zurich wind risk classification."
+        }
+      ]
+    },
+    {
+      "category": "Loss Estimates",
+      "description": "Annual average loss (AAL) estimates for various perils.",
+      "fields": [
+        {
+          "name": "wildfire_air_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for wildfire (AIR model)."
+        },
+        {
+          "name": "wildfire_rms_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for wildfire (RMS model)."
+        },
+        {
+          "name": "flood_air_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for flood (AIR model)."
+        },
+        {
+          "name": "flood_rms_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for flood (RMS model)."
+        },
+        {
+          "name": "earthquake_air_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for earthquake (AIR model)."
+        },
+        {
+          "name": "earthquake_rms_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for earthquake (RMS model)."
+        },
+        {
+          "name": "severe_convective_storm_air_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for severe convective storm (AIR model)."
+        },
+        {
+          "name": "severe_convective_storm_rms_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for severe convective storm (RMS model)."
+        },
+        {
+          "name": "tropical_cyclone_air_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for tropical cyclone (AIR model)."
+        },
+        {
+          "name": "tropical_cyclone_rms_aal",
+          "type": "numeric (double precision)",
+          "description": "Annual average loss for tropical cyclone (RMS model)."
+        },
+        {
+          "name": "normal_loss_estimate",
+          "type": "string (character varying)",
+          "description": "Estimated normal loss."
+        },
+        {
+          "name": "probable_max_loss",
+          "type": "string (character varying)",
+          "description": "Probable maximum loss (PML)."
+        },
+        {
+          "name": "max_foreseeable_loss",
+          "type": "string (character varying)",
+          "description": "Maximum foreseeable loss."
+        },
+        {
+          "name": "catastrophic_loss_event",
+          "type": "string (character varying)",
+          "description": "Details of catastrophic loss events."
+        },
+        {
+          "name": "machinery_normal_loss_est",
+          "type": "string (character varying)",
+          "description": "Normal loss estimate for machinery."
+        },
+        {
+          "name": "machinery_probable_max_loss",
+          "type": "string (character varying)",
+          "description": "Probable maximum loss for machinery."
+        },
+        {
+          "name": "machinery_max_foreseeable_loss",
+          "type": "string (character varying)",
+          "description": "Maximum foreseeable loss for machinery."
+        }
+      ]
+    },
+    {
+      "category": "Building Characteristics",
+      "description": "Physical and structural attributes affecting risk.",
+      "fields": [
+        {
+          "name": "floor_area",
+          "type": "string (character varying)",
+          "description": "Floor area of the building."
+        },
+        {
+          "name": "area_unit",
+          "type": "string (character varying)",
+          "description": "Unit of measurement for floor area (e.g., sq ft)."
+        },
+        {
+          "name": "basement",
+          "type": "string (character varying)",
+          "description": "Presence of a basement."
+        },
+        {
+          "name": "number_of_basement_levels",
+          "type": "string (character varying)",
+          "description": "Number of basement levels."
+        },
+        {
+          "name": "basement_finish_type",
+          "type": "string (character varying)",
+          "description": "Type of basement finish."
+        },
+        {
+          "name": "roof_age",
+          "type": "string (character varying)",
+          "description": "Age of the roof."
+        },
+        {
+          "name": "roof_covering",
+          "type": "string (character varying)",
+          "description": "Type of roof covering (e.g., shingles)."
+        },
+        {
+          "name": "roof_geometry",
+          "type": "string (character varying)",
+          "description": "Shape of the roof (e.g., flat, gabled)."
+        },
+        {
+          "name": "roof_anchor",
+          "type": "string (character varying)",
+          "description": "Presence of roof anchoring."
+        },
+        {
+          "name": "roof_sheathing_attachment",
+          "type": "string (character varying)",
+          "description": "Method of roof sheathing attachment."
+        },
+        {
+          "name": "roof_parapet",
+          "type": "string (character varying)",
+          "description": "Presence of a roof parapet."
+        },
+        {
+          "name": "rooftop_tanks",
+          "type": "string (character varying)",
+          "description": "Presence of rooftop tanks."
+        },
+        {
+          "name": "cladding_type",
+          "type": "string (character varying)",
+          "description": "Type of exterior cladding."
+        },
+        {
+          "name": "exterior_walls_or_cladding",
+          "type": "string (character varying)",
+          "description": "Details of exterior walls or cladding."
+        },
+        {
+          "name": "opening_protection",
+          "type": "string (character varying)",
+          "description": "Protection for openings (e.g., windows, doors)."
+        },
+        {
+          "name": "opening_protection_description",
+          "type": "string (character varying)",
+          "description": "Detailed description of opening protection."
+        },
+        {
+          "name": "frame_foundation_connection",
+          "type": "string (character varying)",
+          "description": "Connection between frame and foundation."
+        },
+        {
+          "name": "engineered_foundation",
+          "type": "string (character varying)",
+          "description": "Presence of an engineered foundation."
+        },
+        {
+          "name": "slope",
+          "type": "string (character varying)",
+          "description": "Slope of the property site."
+        },
+        {
+          "name": "building_elevation",
+          "type": "string (character varying)",
+          "description": "Elevation of the building."
+        },
+        {
+          "name": "finished_floor_elevation",
+          "type": "string (character varying)",
+          "description": "Elevation of the finished floor."
+        },
+        {
+          "name": "base_flood_elevation",
+          "type": "string (character varying)",
+          "description": "Base flood elevation for flood risk."
+        },
+        {
+          "name": "custom_elevation",
+          "type": "string (character varying)",
+          "description": "Custom elevation data."
+        },
+        {
+          "name": "first_floor_height",
+          "type": "string (character varying)",
+          "description": "Height of the first floor."
+        },
+        {
+          "name": "floor_type",
+          "type": "string (character varying)",
+          "description": "Type of flooring."
+        },
+        {
+          "name": "structure_condition",
+          "type": "string (character varying)",
+          "description": "Overall condition of the structure."
+        },
+        {
+          "name": "ibhs_certified_structures",
+          "type": "string (character varying)",
+          "description": "IBHS certification status."
+        }
+      ]
+    },
+    {
+      "category": "Risk Mitigation",
+      "description": "Features and measures to reduce risk exposure.",
+      "fields": [
+        {
+          "name": "unreinforced_masonry_retrofit",
+          "type": "string (character varying)",
+          "description": "Retrofit status for unreinforced masonry."
+        },
+        {
+          "name": "unreinforced_masonry_chimney",
+          "type": "string (character varying)",
+          "description": "Presence of unreinforced masonry chimney."
+        },
+        {
+          "name": "pounding",
+          "type": "string (character varying)",
+          "description": "Risk of building pounding during earthquakes."
+        },
+        {
+          "name": "soft_story",
+          "type": "string (character varying)",
+          "description": "Presence of soft story structures."
+        },
+        {
+          "name": "vertical_irregularity",
+          "type": "string (character varying)",
+          "description": "Presence of vertical structural irregularities."
+        },
+        {
+          "name": "plan_irregularity",
+          "type": "string (character varying)",
+          "description": "Presence of plan irregularities."
+        },
+        {
+          "name": "short_column",
+          "type": "string (character varying)",
+          "description": "Presence of short columns."
+        },
+        {
+          "name": "cripple_walls",
+          "type": "string (character varying)",
+          "description": "Presence of cripple walls."
+        },
+        {
+          "name": "frame_bolted",
+          "type": "string (character varying)",
+          "description": "Bolted frame status."
+        },
+        {
+          "name": "purlin_anchoring",
+          "type": "string (character varying)",
+          "description": "Purlin anchoring status."
+        },
+        {
+          "name": "equip_support_or_fatigue",
+          "type": "string (character varying)",
+          "description": "Equipment support or fatigue status."
+        },
+        {
+          "name": "flashing_and_coping_quality",
+          "type": "string (character varying)",
+          "description": "Quality of flashing and coping."
+        },
+        {
+          "name": "wet_floodproofing_code",
+          "type": "string (character varying)",
+          "description": "Wet floodproofing code compliance."
+        },
+        {
+          "name": "service_equipment_protection",
+          "type": "string (character varying)",
+          "description": "Protection for service equipment."
+        },
+        {
+          "name": "ground_level_mech_or_elec_eqpment",
+          "type": "string (character varying)",
+          "description": "Presence of ground-level mechanical/electrical equipment."
+        }
+      ]
+    },
+    {
+      "category": "Business Interruption",
+      "description": "Attributes related to business interruption risks.",
+      "fields": [
+        {
+          "name": "business_interrupt_preparedness",
+          "type": "string (character varying)",
+          "description": "Preparedness measures for business interruption."
+        },
+        {
+          "name": "derived_business_interrupt_preparedness",
+          "type": "numeric (double precision)",
+          "description": "Calculated preparedness score."
+        },
+        {
+          "name": "business_interrupt_redundancy",
+          "type": "string (character varying)",
+          "description": "Redundancy measures for business interruption."
+        },
+        {
+          "name": "derived_business_interrupt_redundancy",
+          "type": "numeric (double precision)",
+          "description": "Calculated redundancy score."
+        },
+        {
+          "name": "business_interruption_dependency",
+          "type": "string (character varying)",
+          "description": "Dependencies affecting business interruption."
+        },
+        {
+          "name": "derived_business_interruption_dependency",
+          "type": "numeric (double precision)",
+          "description": "Calculated dependency score."
+        },
+        {
+          "name": "business_interruption_value_basis",
+          "type": "string (character varying)",
+          "description": "Basis for business interruption value."
+        },
+        {
+          "name": "business_interruption_indemnity_waiting_period",
+          "type": "string (character varying)",
+          "description": "Waiting period for indemnity."
+        },
+        {
+          "name": "business_interruption_indemnity_period_limit",
+          "type": "string (character varying)",
+          "description": "Limit of indemnity period."
+        },
+        {
+          "name": "business_interruption_value_12mo",
+          "type": "string (character varying)",
+          "description": "12-month business interruption value."
+        }
+      ]
+    },
+    {
+      "category": "Data Quality and Flags",
+      "description": "Flags and metadata for data quality and validation.",
+      "fields": [
+        {
+          "name": "ad_flag_value",
+          "type": "boolean",
+          "description": "Address data quality flag."
+        },
+        {
+          "name": "ad_flag_name",
+          "type": "string (character varying)",
+          "description": "Name of address data quality flag."
+        },
+        {
+          "name": "ad_flag_msg",
+          "type": "string (text)",
+          "description": "Message for address data quality flag."
+        },
+        {
+          "name": "bh_flag_value",
+          "type": "boolean",
+          "description": "Building height data quality flag."
+        },
+        {
+          "name": "bh_flag_msg",
+          "type": "string (text)",
+          "description": "Message for building height flag."
+        },
+        {
+          "name": "ct_flag_value",
+          "type": "boolean",
+          "description": "Construction type data quality flag."
+        },
+        {
+          "name": "ct_flag_msg",
+          "type": "string (text)",
+          "description": "Message for construction type flag."
+        },
+        {
+          "name": "gc_flag_value_new",
+          "type": "boolean",
+          "description": "Geocoding data quality flag."
+        },
+        {
+          "name": "gc_rule_desc",
+          "type": "string (text)",
+          "description": "Geocoding rule description."
+        },
+        {
+          "name": "gc_rule_id",
+          "type": "string (character varying)",
+          "description": "Geocoding rule ID."
+        },
+        {
+          "name": "fmt_flag_value",
+          "type": "boolean",
+          "description": "Format data quality flag."
+        },
+        {
+          "name": "fmt_rule_desc",
+          "type": "string (text)",
+          "description": "Format rule description."
+        },
+        {
+          "name": "fmt_rule_id",
+          "type": "string (character varying)",
+          "description": "Format rule ID."
+        },
+        {
+          "name": "eng_flag_value",
+          "type": "boolean",
+          "description": "Engineering data quality flag."
+        },
+        {
+          "name": "eng_rule_desc",
+          "type": "string (text)",
+          "description": "Engineering rule description."
+        },
+        {
+          "name": "eng_rule_id",
+          "type": "string (character varying)",
+          "description": "Engineering rule ID."
+        },
+        {
+          "name": "values_flag_value",
+          "type": "boolean",
+          "description": "Values data quality flag."
+        },
+        {
+          "name": "values_rule_desc",
+          "type": "string (character varying)",
+          "description": "Values rule description."
+        },
+        {
+          "name": "values_rule_id",
+          "type": "string (character varying)",
+          "description": "Values rule ID."
+        },
+        {
+          "name": "dq_flags_status",
+          "type": "string (character varying)",
+          "description": "Overall data quality flags status."
+        }
+      ]
+    },
+    {
+      "category": "Metadata",
+      "description": "Audit and additional information.",
+      "fields": [
+        {
+          "name": "created_by",
+          "type": "string (character varying)",
+          "description": "User who created the record."
+        },
+        {
+          "name": "created_timestamp",
+          "type": "timestamp",
+          "description": "Timestamp when the record was created."
+        },
+        {
+          "name": "last_modified_by",
+          "type": "string (character varying)",
+          "description": "User who last modified the record."
+        },
+        {
+          "name": "last_updated_timestamp",
+          "type": "timestamp",
+          "description": "Timestamp of last update."
+        },
+        {
+          "name": "comments",
+          "type": "string (character varying)",
+          "description": "General comments about the record."
+        },
+        {
+          "name": "comments_description",
+          "type": "string (character varying)",
+          "description": "Detailed comment description."
+        },
+        {
+          "name": "un_mapped_fields",
+          "type": "jsonb",
+          "description": "Additional fields stored as JSON."
+        },
+        {
+          "name": "version",
+          "type": "bigint",
+          "description": "Record version number."
+        },
+        {
+          "name": "loc_version",
+          "type": "bigint",
+          "description": "Location-specific version number."
+        },
+        {
+          "name": "ux_sov_field_map_id",
+          "type": "bigint",
+          "description": "ID for SOV field mapping."
+        },
+        {
+          "name": "status",
+          "type": "string (character varying)",
+          "description": "Record status."
+        },
+        {
+          "name": "location_summary_status",
+          "type": "string (character varying)",
+          "description": "Summary status of the location."
+        }
+      ]
+    },
+    {
+      "category": "Miscellaneous",
+      "description": "Other attributes and placeholders.",
+      "fields": [
+        {
+          "name": "business_unit",
+          "type": "string (character varying)",
+          "description": "Business unit associated with the property."
+        },
+        {
+          "name": "owned_or_leased",
+          "type": "string (character varying)",
+          "description": "Ownership status (owned or leased)."
+        },
+        {
+          "name": "security",
+          "type": "string (character varying)",
+          "description": "Security measures at the property."
+        },
+        {
+          "name": "no_of_employees",
+          "type": "string (character varying)",
+          "description": "Number of employees at the location."
+        },
+        {
+          "name": "percent_day_shift",
+          "type": "string (character varying)",
+          "description": "Percentage of employees on day shift."
+        },
+        {
+          "name": "percent_evening_shift",
+          "type": "string (character varying)",
+          "description": "Percentage of employees on evening shift."
+        },
+        {
+          "name": "percent_night_shift",
+          "type": "string (character varying)",
+          "description": "Percentage of employees on night shift."
+        },
+        {
+          "name": "place_holder_6",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_7",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_8",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_9",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_10",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_11",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_12",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_13",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_14",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_15",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_16",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "place_holder_17",
+          "type": "string (character varying)",
+          "description": "Placeholder column."
+        },
+        {
+          "name": "risk_accumulation_zone",
+          "type": "string (character varying)",
+          "description": "Zone for risk accumulation analysis."
+        },
+        {
+          "name": "age",
+          "type": "string (character varying)",
+          "description": "Age of the property."
+        },
+        {
+          "name": "hazard_status",
+          "type": "string (character varying)",
+          "description": "Status of hazard risks."
+        },
+        {
+          "name": "site_hazard",
+          "type": "string (character varying)",
+          "description": "Site-specific hazard details."
+        },
+        {
+          "name": "tree_density",
+          "type": "string (character varying)",
+          "description": "Density of trees around the property."
+        },
+        {
+          "name": "wind_missile",
+          "type": "string (character varying)",
+          "description": "Risk of wind-driven missiles."
+        },
+        {
+          "name": "envelope_opening",
+          "type": "string (character varying)",
+          "description": "Details of envelope openings."
+        },
+        {
+          "name": "acquisition_date",
+          "type": "string (character varying)",
+          "description": "Date of property acquisition."
+        },
+        {
+          "name": "is_acquisition_date_updated",
+          "type": "boolean",
+          "description": "Indicates if acquisition date was updated."
+        }
+      ]
+    }
+  ]
+}
