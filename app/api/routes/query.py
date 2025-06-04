@@ -2,11 +2,12 @@ import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import Dict
 
 from app.models.schemas import QueryRequest, QueryResponse
 from app.services.query_processor import QueryProcessor
 from app.services.database_service import DatabaseService
-from app.services.visualization_service import VisualizationService
+from app.services.visualization_rec_service import VisualizationService
 from app.services.query_analyzer import QueryAnalyzer
 from app.core.dependencies import get_db, get_company_number, get_user_id
 from app.utils.logging import logger
@@ -20,7 +21,7 @@ async def process_query(
     user_id: str = Depends(get_user_id),
     db: Session = Depends(get_db),
 ):
-    """Process text-to-SQL query with enhanced context handling"""
+    """Process text-to-SQL query with enhanced context handling and currency formatting"""
     try:
         query_processor = QueryProcessor()
         database_service = DatabaseService()
@@ -42,8 +43,8 @@ async def process_query(
 
         if classification.category == "sql_convertible":
             return await _handle_sql_convertible(
-                request, query_id, query_processor, database_service, 
-                visualization_service, company_number, user_id, db
+                request, query_id, query_processor, database_service, visualization_service,
+                company_number, user_id, db
             )
         elif classification.category == "property_risk_insurance":
             return await _handle_property_risk_insurance(
@@ -65,10 +66,10 @@ async def process_query(
         return _handle_processing_error(request, str(e))
 
 async def _handle_sql_convertible(
-    request, query_id, query_processor, database_service, 
-    visualization_service, company_number, user_id, db
+    request, query_id, query_processor, database_service, visualization_service,
+    company_number, user_id, db
 ):
-    """Handle SQL convertible questions"""
+    """Handle SQL convertible questions with currency formatting"""
     sql_query = query_processor.generate_sql(request.question, company_number)
     
     if not sql_query:
@@ -82,7 +83,7 @@ async def _handle_sql_convertible(
             response_type="query_generation_failed",
         )
 
-    # Execute the query
+    # Execute the query (currency formatting is now handled in DatabaseService)
     df = database_service.execute_query(sql_query, company_number)
 
     if df is None or df.empty:
@@ -93,13 +94,10 @@ async def _handle_sql_convertible(
     # Success path
     explanation, summary = query_processor.generate_explanation(request.question, sql_query)
     
-    visualization = None
-    if visualization_service.should_show_visualization(df, sql_query):
-        viz_result = visualization_service.suggest_visualization(
-            df, request.question, request.visualization_type, sql_query
-        )
-        if viz_result:
-            visualization = viz_result
+    # Add currency context to explanation if monetary columns are involved
+    explanation = _enhance_explanation_with_currency_context(
+        explanation, df.columns.tolist(), company_number, database_service
+    )    
 
     # Save to chat history
     database_service.save_chat_history(
@@ -107,21 +105,58 @@ async def _handle_sql_convertible(
         company_number, user_id
     )
 
-    query_response_data = {
-        'query_id': query_id,
-        'question': request.question,
-        'sql_query': sql_query,
-        'explanation': explanation,
-        'summary': summary,
-        'data': df.to_dict('records') if not df.empty else [],
-        'timestamp': datetime.utcnow(),
-        'response_type': "sql_convertible",
-    }
 
-    if visualization:
-        query_response_data['visualization'] = visualization
+    visualization = visualization_service.recommend(sql_query,df)
+    visualization_formatted = _parse_visualization_response(visualization)
+    if visualization != "None":     
+        query_response_data = {
+            'query_id': query_id,
+            'question': request.question,
+            'sql_query': sql_query,
+            'explanation': explanation,
+            'summary': summary,
+            'visualization': visualization_formatted,
+            'data': df.to_dict('records') if not df.empty else [],
+            'timestamp': datetime.utcnow(),
+            'response_type': "sql_convertible",
+        }
+    else:
+        query_response_data = {
+            'query_id': query_id,
+            'question': request.question,
+            'sql_query': sql_query,
+            'explanation': explanation,
+            'summary': 'The requested value is' + df.iat[0, 0],
+            'visualization': visualization_formatted,
+            'data': df.to_dict('records') if not df.empty else [],
+            'timestamp': datetime.utcnow(),
+            'response_type': "sql_convertible",
+        }
 
+    
     return QueryResponse(**query_response_data)
+
+def _parse_visualization_response(response: str) -> Dict[str, str]:
+        """Parse the visualization response into a dictionary"""
+        response_dict = {}
+        for line in response.split("\n"):
+            if line.strip() and ":" in line:
+                key, value = line.split(":", 1)
+                response_dict[key.strip()] = value.strip()
+        return response_dict 
+    
+def _enhance_explanation_with_currency_context(
+    explanation: str, columns: list, company_number: str, database_service: DatabaseService
+) -> str:
+    """Add currency context to explanation if monetary columns are present"""
+    monetary_cols_in_result = [col for col in columns if col in database_service.MONETARY_COLUMNS]
+    
+    if monetary_cols_in_result:
+        currency_symbol = database_service.get_currency_symbol(company_number)
+        currency_note = f"\n\n💰 **Currency Information:** All monetary values are displayed in {currency_symbol} format with proper formatting."
+        explanation += currency_note
+    
+    return explanation
 
 def _build_query_generation_failed_explanation(question: str) -> str:
     """Build explanation for failed query generation"""
@@ -197,13 +232,17 @@ async def _handle_property_risk_insurance(request, query_id, query_processor, da
     )
 
 async def _handle_data_insights(request, query_id, query_processor, database_service, company_number, user_id, db):
-    """Handle data insights questions"""
+    """Handle data insights questions with currency formatting"""
     company_data = database_service.get_company_data(company_number)
 
     if company_data.empty:
         explanation = "No data available for your company to generate insights."
     else:
         explanation = query_processor.generate_data_insights(request.question, company_data)
+        
+        # Add currency context for insights
+        currency_symbol = database_service.get_currency_symbol(company_number)
+        explanation += f"\n\n💰 **Note:** All monetary values in the analysis are displayed in {currency_symbol} format."
 
     database_service.save_chat_history(
         db, query_id, request.question, None, "data_insights",
