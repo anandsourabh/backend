@@ -25,6 +25,7 @@ class PortfolioDashboardService:
             dashboard_data = {
                 "summary_metrics": self._get_summary_metrics(company_number, currency_symbol),
                 "geographic_distribution": self._get_geographic_distribution(company_number, currency_symbol),
+                "country_distribution": self._get_country_distribution(company_number, currency_symbol),
                 "risk_analysis": self._get_risk_analysis(company_number, currency_symbol),
                 "construction_breakdown": self._get_construction_breakdown(company_number, currency_symbol),
                 "occupancy_breakdown": self._get_occupancy_breakdown(company_number, currency_symbol),
@@ -48,7 +49,6 @@ class PortfolioDashboardService:
         SELECT 
             COUNT(DISTINCT marsh_location_id) as total_locations,
             COUNT(DISTINCT CASE WHEN number_of_buildings IS NOT NULL THEN marsh_location_id END) as locations_with_buildings,
-            COALESCE(SUM(CASE WHEN number_of_buildings ~ '^[0-9]+$' THEN CAST(number_of_buildings AS INTEGER) ELSE 0 END), 0) as total_buildings,
             SUM(derived_total_insured_value) as total_tiv,
             AVG(derived_total_insured_value) as avg_tiv,
             MAX(derived_total_insured_value) as max_tiv,
@@ -82,7 +82,53 @@ class PortfolioDashboardService:
                 metrics[field] = int(metrics[field])
         
         return metrics
-    
+ 
+    def _get_country_distribution(self, company_number: str, currency_symbol: str) -> List[Dict[str, Any]]:
+        """Get TIV and BIV 12 months distribution by country"""
+        sql_query = """
+        SELECT 
+            derived_country AS country,
+            COUNT(DISTINCT marsh_location_id) AS location_count,
+            SUM(derived_total_insured_value) AS total_tiv,
+            SUM(derived_business_interrupt_val_12mo) AS total_biv_12mo,
+            AVG(derived_total_insured_value) AS avg_tiv,
+            AVG(derived_business_interrupt_val_12mo) AS avg_biv_12mo,
+            ROUND(
+                CASE 
+                    WHEN SUM(derived_total_insured_value) > 0 
+                    THEN (SUM(derived_business_interrupt_val_12mo) / SUM(derived_total_insured_value)) * 100
+                    ELSE 0 
+                END::numeric, 2  -- Explicitly cast to numeric
+            ) AS biv_to_tiv_ratio
+        FROM 
+            ux_all_info_consolidated
+        WHERE 
+            company_number = :company_number
+            AND derived_country IS NOT NULL
+        GROUP BY 
+            derived_country
+        ORDER BY 
+            total_tiv DESC NULLS LAST
+        LIMIT 15;
+
+            """
+            
+        df = self.database_service.execute_query_raw(sql_query, company_number)
+            
+        if not df.empty:
+            # Convert location_count to int
+            df['location_count'] = df['location_count'].astype(int)
+                
+            # Format currency values for display
+            currency_columns = ['total_tiv', 'total_biv_12mo', 'avg_tiv', 'avg_biv_12mo']
+            for col in currency_columns:
+                df[col] = df[col].apply(lambda x: CurrencyFormatter.format_currency(x, currency_symbol) if pd.notna(x) else currency_symbol + ' 0')
+                
+            # Format ratio as percentage
+            df['biv_to_tiv_ratio'] = df['biv_to_tiv_ratio'].apply(lambda x: f"{x:.1f}%" if pd.notna(x) else "0.0%")
+            
+        return df.to_dict('records') if not df.empty else []
+   
     def _get_geographic_distribution(self, company_number: str, currency_symbol: str) -> List[Dict[str, Any]]:
         """Get geographic distribution data for map visualization"""
         sql_query = """
