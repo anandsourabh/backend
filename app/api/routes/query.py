@@ -9,6 +9,7 @@ from app.services.query_processor import QueryProcessor
 from app.services.database_service import DatabaseService
 from app.services.visualization_rec_service import VisualizationService
 from app.services.query_analyzer import QueryAnalyzer
+from app.services.portfolio_dashboard_service import PortfolioDashboardService
 from app.core.dependencies import get_db, get_company_number, get_user_id
 from app.utils.logging import logger
 
@@ -55,6 +56,10 @@ async def process_query(
             return await _handle_data_insights(
                 request, query_id, query_processor, database_service, 
                 company_number, user_id, db
+            )
+        elif classification.category == "portfolio_dashboard":
+            return await _handle_portfolio_dashboard(
+            request, query_id, database_service, company_number, user_id, db
             )
         else:
             return _handle_unrelated(request, query_id, database_service, company_number, user_id, db)
@@ -335,6 +340,33 @@ async def _handle_data_insights(request, query_id, query_processor, database_ser
         timestamp=datetime.utcnow(),
         response_type="data_insights",
     )
+
+async def _handle_portfolio_dashboard(request, query_id, database_service, company_number, user_id, db):
+    """Handle portfolio dashboard requests"""
+    try:
+        dashboard_service = PortfolioDashboardService()
+        dashboard_data = dashboard_service.generate_portfolio_dashboard(company_number)
+        
+        explanation = "Here's your comprehensive portfolio overview dashboard with key metrics, geographic distribution, risk analysis, and data quality indicators."
+        
+        database_service.save_chat_history(
+            db, query_id, request.question, None, "portfolio_dashboard",
+            company_number, user_id
+        )
+        
+        return QueryResponse(
+            query_id=query_id,
+            question=request.question,
+            explanation=explanation,
+            summary="Portfolio Overview Dashboard",
+            data=[dashboard_data],  # Wrap in list for consistency
+            timestamp=datetime.utcnow(),
+            response_type="portfolio_dashboard",
+        )
+        
+    except Exception as e:
+        logger.error(f"Portfolio dashboard generation error: {str(e)}")
+        return _handle_processing_error(request, str(e))
 
 def _handle_unrelated(request, query_id, database_service, company_number, user_id, db):
     """Handle unrelated questions"""

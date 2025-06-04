@@ -61,6 +61,7 @@ class QueryProcessor:
         Analyze the following question and classify it into one of these categories:
         - If the question references column names found in the schema and contains terms like "count", "sum", "average", "list", "show", "group by", or "distribution", classify it as "sql_convertible".
         - If the question directly requests insights, trends, or analysis from data without specific reference to SQL operations or schema columns, classify it as "data_insights".
+        - If the question asks for "portfolio overview", "portfolio dashboard", "portfolio summary", or similar comprehensive portfolio requests, classify it as "portfolio_dashboard".
         - For all others, follow the below rules.
 
         1. "sql_convertible" - Can be converted into a SQL query for the database table `ux_all_info_consolidated`. If the question contains columns in the `ux_all_info_consolidated` table, consider it as a SQL Query.
@@ -138,6 +139,12 @@ class QueryProcessor:
         - "Provide me a summary data of my SOV."
 
         4. "unrelated" - Not related to any of the above categories.
+        5. "portfolio_dashboard" - Asking for comprehensive portfolio overview or dashboard.
+            Examples:
+            - "Provide me my portfolio overview"
+            - "Show me a portfolio dashboard"
+            - "Give me a portfolio summary"
+            - "What's my portfolio overview?"
 
         Additionally, determine if the question contains any potentially harmful SQL operations like DROP, DELETE, UNION, semicolons, or SQL comments.
 

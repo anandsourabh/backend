@@ -231,3 +231,24 @@ class DatabaseService:
             raise HTTPException(
                 status_code=500, detail=f"Error retrieving history: {str(e)}"
             )
+        
+    @staticmethod
+    def execute_query_raw(sql_query: str, company_number: str) -> pd.DataFrame:
+        """Execute SQL query and return raw results without currency formatting"""
+        try:
+                with engine.connect() as connection:
+                    with connection.begin() as tx:
+                        connection.execute(text("SET TRANSACTION READ ONLY"))
+                        result = connection.execute(
+                            text(sql_query), {"company_number": company_number}
+                        )
+                        data = [dict(row) for row in result.mappings()]
+                        tx.rollback()
+                        
+                        return pd.DataFrame(data)
+
+        except Exception as e:
+            logger.error(f"Query execution error: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Error executing query: {str(e)}"
+                )
