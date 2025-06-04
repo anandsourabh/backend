@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import Dict
+from typing import Dict, Any
 
 from app.models.schemas import QueryRequest, QueryResponse
 from app.services.query_processor import QueryProcessor
@@ -105,10 +105,33 @@ async def _handle_sql_convertible(
         company_number, user_id
     )
 
-
-    visualization = visualization_service.recommend(sql_query,df)
+    visualization = visualization_service.recommend(sql_query, df)
     visualization_formatted = _parse_visualization_response(visualization)
-    if visualization != "None":     
+    
+    # ENHANCED: Handle single-value results
+    if visualization == "None" and len(df) == 1 and len(df.columns) == 1:
+        # Generate human-readable summary for single values
+        value = df.iloc[0, 0]
+        column_name = df.columns[0]
+        
+        # Create contextual summary based on the query
+        human_readable_summary = _generate_single_value_summary(
+            request.question,sql_query, column_name, value, company_number, database_service
+        )
+        
+        query_response_data = {
+            'query_id': query_id,
+            'question': request.question,
+            'sql_query': sql_query,
+            'explanation': explanation,
+            'summary': human_readable_summary,
+            'visualization': None,  # Explicitly set to None
+            'data': df.to_dict('records') if not df.empty else [],
+            'timestamp': datetime.utcnow(),
+            'response_type': "sql_convertible_single_value",  # New response type
+        }
+    elif visualization_formatted and "None" not in str(visualization_formatted.get("Chart Type", "")):
+        # Regular visualization response
         query_response_data = {
             'query_id': query_id,
             'question': request.question,
@@ -121,20 +144,75 @@ async def _handle_sql_convertible(
             'response_type': "sql_convertible",
         }
     else:
+        # No visualization but multi-row data
         query_response_data = {
             'query_id': query_id,
             'question': request.question,
             'sql_query': sql_query,
             'explanation': explanation,
-            'summary': 'The requested value is' + df.iat[0, 0],
-            'visualization': visualization_formatted,
+            'summary': summary,
+            'visualization': None,
             'data': df.to_dict('records') if not df.empty else [],
             'timestamp': datetime.utcnow(),
             'response_type': "sql_convertible",
         }
-
     
     return QueryResponse(**query_response_data)
+
+def _generate_single_value_summary(
+    question: str, sql_query: str, column_name: str, value: Any, 
+    company_number: str, database_service: DatabaseService
+) -> str:
+    """Generate human-readable summary for single value results"""
+    
+    # Detect the type of aggregation from SQL
+    sql_upper = sql_query.upper()
+    
+    # Format the value if it's already currency-formatted
+    formatted_value = str(value)
+    
+    # Detect query type and create appropriate summary
+    if 'COUNT' in sql_upper:
+        if 'location' in question.lower() or 'properties' in question.lower():
+            return f"The total number of locations is {formatted_value}"
+        elif 'building' in question.lower():
+            return f"The total number of buildings is {formatted_value}"
+        else:
+            return f"The count is {formatted_value}"
+    
+    elif 'SUM' in sql_upper:
+        if 'tiv' in question.lower() or 'insured value' in question.lower():
+            return f"The total insured value is {formatted_value}"
+        elif 'revenue' in question.lower():
+            return f"The total revenue is {formatted_value}"
+        elif 'business' in question.lower() and 'interrupt' in question.lower():
+            return f"The total business interruption value is {formatted_value}"
+        else:
+            return f"The total is {formatted_value}"
+    
+    elif 'AVG' in sql_upper or 'AVERAGE' in sql_upper:
+        if 'tiv' in question.lower() or 'insured value' in question.lower():
+            return f"The average insured value is {formatted_value}"
+        elif 'revenue' in question.lower():
+            return f"The average revenue is {formatted_value}"
+        else:
+            return f"The average is {formatted_value}"
+    
+    elif 'MAX' in sql_upper:
+        if 'tiv' in question.lower() or 'insured value' in question.lower():
+            return f"The maximum insured value is {formatted_value}"
+        else:
+            return f"The maximum value is {formatted_value}"
+    
+    elif 'MIN' in sql_upper:
+        if 'tiv' in question.lower() or 'insured value' in question.lower():
+            return f"The minimum insured value is {formatted_value}"
+        else:
+            return f"The minimum value is {formatted_value}"
+    
+    else:
+        # Generic response
+        return f"The result is {formatted_value}"
 
 def _parse_visualization_response(response: str) -> Dict[str, str]:
         """Parse the visualization response into a dictionary"""

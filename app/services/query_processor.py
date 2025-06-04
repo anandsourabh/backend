@@ -80,6 +80,55 @@ class QueryProcessor:
         - "What does Risk to Capital mean in Property Insurance?"
         - "What is a Schedule of Value file?"
         - "What is the importance of Data Quality in Property Risk Management?"
+        - ### Contains the below terms in the {question}
+        #### A
+        - **AAL (Average Annual Loss)**: The average loss expected per year from a specific risk or peril, calculated over a long-term period. It is a key metric in CAT modeling, helping insurers understand the expected frequency and severity of losses.
+
+        #### C
+        - **CAT Modeling (Catastrophe Modeling)**: A statistical method used to estimate potential losses from catastrophic events (e.g., hurricanes, earthquakes) by simulating various scenarios based on historical data, geographic information, and risk factors. CAT models often incorporate complex algorithms to predict the likelihood and impact of extreme weather events.
+
+        - **Carriers**: Insurance companies or underwriters that provide coverage for risks associated with commercial properties. They assess exposure, set premiums, and manage claims.
+
+        - **Loss Curve**: A graphical representation that shows the cumulative losses expected at various return periods (e.g., 100-year, 250-year events). This curve helps insurers understand the potential financial impact of catastrophic events over time.
+
+        - **Catastrophe Bonds (Cat Bonds)**: A type of insurance-linked security that allows insurers to transfer risk to investors. In the event of a specified catastrophe, the bond's principal is used to cover losses.
+
+        #### D
+        - **Deductible**: The amount that the insured must pay out of pocket before the insurance coverage kicks in for a claim. Higher deductibles can lower premiums but increase the financial burden on the insured in the event of a loss.
+
+        #### E
+        - **Exposure**: The total value of assets or properties that are at risk of loss due to specific perils. It is a critical factor in determining insurance premiums and coverage. Exposure can be quantified in terms of Total Insured Value (TIV) and is often assessed geographically.
+
+        - **Exceedance Probability (EP) **: The probability that losses will exceed a certain threshold within a specified time frame. This metric is crucial for understanding the risk of extreme events.
+
+        #### L
+        - **Loss Estimates**: Projections of potential losses that may occur from specific risks or events, often derived from historical data, modeling, and expert judgment. Loss estimates can be categorized into expected losses and unexpected losses.
+
+        - **Loss Curves**: Graphs that depict the relationship between the frequency of loss events and the severity of those losses. In CAT modeling, loss curves help assess risk by showing how losses accumulate over time and under various scenarios.
+
+        - **Loss Adjustment Expense (LAE)**: Costs incurred by an insurer to investigate and settle claims. LAE can significantly impact the overall cost of claims and is often included in loss estimates.
+
+        #### M
+        - **Model Validation**: The process of ensuring that a CAT model accurately reflects real-world conditions and produces reliable loss estimates. This involves comparing model outputs with actual historical losses and adjusting the model as necessary.
+
+        - **Modifiers**: Adjustments made to base loss estimates to account for various factors that can influence risk. These can include:
+        - **Secondary Modifiers**: Factors that adjust the base loss estimates based on specific characteristics of the property or location, such as:
+            - **Building Codes**: The strength and resilience of structures based on local regulations.
+            - **Mitigation Measures**: Improvements made to reduce risk, such as flood defenses or seismic retrofitting.
+            - **Geographic Factors**: Proximity to hazards (e.g., flood zones, fault lines) that can influence risk levels.
+            - **Occupancy Type**: The nature of the business or use of the property, which can affect vulnerability to certain risks.
+
+        #### N
+        - **Non-CAT Modeling**: Risk assessment methods that do not focus on catastrophic events but rather on more frequent, lower-severity losses. This includes traditional actuarial methods and statistical analyses that assess everyday risks.
+
+        #### S
+        - **Severity**: The magnitude of loss associated with a specific event or risk. In CAT modeling, severity is often analyzed to understand the potential financial impact of catastrophic events. It is typically expressed in terms of monetary value.
+        - **Stochastic Modeling**: A method that incorporates randomness and uncertainty into the modeling process, allowing for the simulation of various scenarios and outcomes. This approach is particularly useful in CAT modeling to account for the unpredictability of catastrophic events.
+        - **Sub-Limit**: A specific limit on the amount of coverage available for a particular type of loss or peril within a broader insurance policy. Sub-limits can apply to specific risks, such as flood or earthquake coverage.
+
+        #### T
+        - **TIV (Total Insured Value)**: The total value of all insured properties and assets, which is used to determine coverage limits and premiums. TIV is a critical component in assessing exposure and risk.
+        - **Tornado Alley**: A region in the central United States known for a high frequency of tornadoes, which poses significant risk for commercial property exposure. Understanding the geographic risks associated with Tornado Alley is essential for insurers operating in this area.
 
         3. "data_insights" - Asking for insights, analysis, or patterns from company data.
         Examples:
@@ -353,28 +402,45 @@ class QueryProcessor:
     def generate_explanation(self, question: str, sql_query: str) -> Tuple[str, str]:
         """Generate explanation and summary for the SQL query"""
         try:
-            explanation_prompt = f"""
-            You are a SQL expert. Given the following SQL query, explain it in simple terms for a non-technical user.
-            - Break it down step by step.
-            - Describe what the query does.
-            - Mention filtering conditions, aggregations, and joins if any.
+            combined_prompt = f"""
+            You are a SQL expert. Given the following SQL query, provide TWO separate sections:
 
             Question: {question}
             SQL Query: {sql_query}
-            Provide a detailed and clear explanation.
+
+            Please provide your response in the following format:
+
+            EXPLANATION:
+            [Provide a detailed explanation of the SQL query in simple terms for a non-technical user. Break it down step by step, describe what the query does, and mention filtering conditions, aggregations, and joins if any.]
+
+            SUMMARY:
+            [Provide a brief 2-3 line summary that explains the AI approach used to answer this question. Focus on what the AI analyzed and how it processed the request.]
+
+            Make sure to include both sections with the exact headers "EXPLANATION:" and "SUMMARY:" for proper parsing.
             """
-            explanation = self.openai_service.call_with_retry(explanation_prompt)
-
-            summary_prompt = f"""
-            Based on the following question and SQL query, provide a brief 2-3 line summary that explains the AI approach used to answer this question. Focus on what the AI analyzed and how it processed the request.
-
-            Question: {question}
-            SQL Query: {sql_query}
             
-            Provide only a concise 2-3 line summary of the AI approach.
-            """
-
-            summary = self.openai_service.call_with_retry(summary_prompt)
+            response = self.openai_service.call_with_retry(combined_prompt)
+            
+            # Parse the response to extract explanation and summary
+            explanation = ""
+            summary = ""
+            
+            if "EXPLANATION:" in response and "SUMMARY:" in response:
+                # Split by SUMMARY: to separate the two sections
+                parts = response.split("SUMMARY:")
+                if len(parts) >= 2:
+                    # Extract explanation (everything after EXPLANATION: and before SUMMARY:)
+                    explanation_part = parts[0]
+                    if "EXPLANATION:" in explanation_part:
+                        explanation = explanation_part.split("EXPLANATION:", 1)[1].strip()
+                    
+                    # Extract summary (everything after SUMMARY:)
+                    summary = parts[1].strip()
+            else:
+                # Fallback if parsing fails - use the entire response as explanation
+                logger.warning("Could not parse explanation and summary sections, using fallback")
+                explanation = response
+                summary = "The AI analyzed your question and converted it into a SQL query to retrieve the requested data from the database."
 
             return explanation, summary
 
