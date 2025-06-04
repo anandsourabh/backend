@@ -1,3 +1,9 @@
 app/core/__pycache__/database.cpython-313.pyc
 *.pyc
 app/api/.DS_Store
+*.pyc
+*.pyc
+app/core/.DS_Store
+app/models/.DS_Store
+app/services/.DS_Store
+app/utils/.DS_Store
