@@ -80,5 +80,46 @@ def create_tables():
             """)
         )
 
+        # Create document metadata table for vector search
+        session.execute(
+                text("""
+                    CREATE TABLE IF NOT EXISTS document_metadata (
+                        id SERIAL PRIMARY KEY,
+                        doc_id VARCHAR UNIQUE NOT NULL,
+                        filename VARCHAR NOT NULL,
+                        company_number VARCHAR,
+                        document_type VARCHAR NOT NULL CHECK (document_type IN ('company_specific', 'general')),
+                        user_id VARCHAR NOT NULL,
+                        chunk_count INTEGER NOT NULL,
+                        vector_ids JSONB NOT NULL,
+                        file_size BIGINT NOT NULL,
+                        upload_timestamp TIMESTAMP NOT NULL,
+                        created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+            )
+            
+        # Create indexes for document metadata
+        session.execute(
+                text("""
+                    CREATE INDEX IF NOT EXISTS idx_documents_user
+                    ON document_metadata(company_number, user_id, upload_timestamp DESC)
+                """)
+            )
+
+        session.execute(
+                text("""
+                    CREATE INDEX IF NOT EXISTS idx_documents_type
+                    ON document_metadata(document_type, upload_timestamp DESC)
+                """)
+            )
+            
+        session.execute(
+                text("""
+                    CREATE INDEX IF NOT EXISTS idx_documents_doc_id
+                    ON document_metadata(doc_id)
+                """)
+            )    
+
         session.commit()
         logger.info("Database tables created successfully")

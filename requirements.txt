@@ -20,3 +20,9 @@ httpx==0.24.0
 openai==0.28.1
 asgi-correlation-id~=3.0.0
 pydantic_settings
+#Vector search
+faiss-cpu
+PyPDF2==3.0.1
+python-multipart
+sentence-transformers
+tiktoken

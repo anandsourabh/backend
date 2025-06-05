@@ -8,3 +8,5 @@ app/models/.DS_Store
 app/services/.DS_Store
 app/utils/.DS_Store
 *.pyc
+app/config/.DS_Store
+app/api/routes/.DS_Store

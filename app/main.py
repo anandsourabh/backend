@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import create_tables
-from app.api.routes import query, history, bookmarks, stats
+from app.api.routes import query, history, bookmarks, stats, documents
 from app.config.settings import settings
 from app.utils.logging import logger
 
@@ -24,6 +24,7 @@ def create_app() -> FastAPI:
     app.include_router(history.router, prefix="/api", tags=["history"])
     app.include_router(bookmarks.router, prefix="/api", tags=["bookmarks"])
     app.include_router(stats.router, prefix="/api", tags=["stats"])
+    app.include_router(documents.router, prefix="/api", tags=["documents"])
 
     @app.on_event("startup")
     async def startup_event():
